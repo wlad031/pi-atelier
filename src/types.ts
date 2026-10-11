@@ -81,6 +81,7 @@ export interface AtelierConfig extends DisplaySettings {
 	showSidebarOnStartup: boolean;
 	sidebarPanelLayout: SidebarPanelLayout;
 	completionNotifications: boolean;
+	hideWorkingLabel: boolean;
 }
 
 export interface AtelierMetrics {

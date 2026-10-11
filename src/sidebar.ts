@@ -151,13 +151,17 @@ function labeledRow(
 
 function agentRows(
 	snapshot: SidebarSnapshot,
+	config: AtelierConfig,
 	width: number,
 	palette: AtelierPalette,
 	theme: ThemeLike,
 ): string[] {
 	const working = snapshot.activity === "working";
 	const label = working ? "Working" : "Ready";
-	const phrase = working && snapshot.workingLabel ? ` · ${sanitizeInline(snapshot.workingLabel)}` : "";
+	const phrase =
+		working && !config.hideWorkingLabel && snapshot.workingLabel
+			? ` · ${sanitizeInline(snapshot.workingLabel)}`
+			: "";
 	const knownModel = Boolean(snapshot.modelId || snapshot.provider);
 	return [
 		theme.bold(palette.paint(snapshot.activity, `${working ? "◆" : "●"} ${label}${phrase}`)),
@@ -703,7 +707,7 @@ export function renderSidebarLines(
 							? "✧"
 							: "✦",
 				},
-				rows: agentRows(snapshot, panelWidth, palette, theme),
+				rows: agentRows(snapshot, config, panelWidth, palette, theme),
 				dropRank: DROP_RANK.required,
 			},
 		],

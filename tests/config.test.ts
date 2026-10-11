@@ -115,6 +115,7 @@ describe("configuration validation", () => {
 			contextWarning: 95,
 			contextDanger: 80,
 			showSidebarToolNames: "yes",
+			hideWorkingLabel: "no",
 			showSidebarOnStartup: "yes",
 		});
 		expect(result.config.contextWarning).toBe(70);
@@ -122,6 +123,7 @@ describe("configuration validation", () => {
 			expect.arrayContaining([
 				expect.stringContaining("threshold"),
 				"showSidebarToolNames must be boolean",
+				"hideWorkingLabel must be boolean",
 				"showSidebarOnStartup must be boolean",
 			]),
 		);
@@ -152,6 +154,7 @@ describe("configuration files", () => {
 
 	it.each<[string, Record<string, unknown>]>([
 		["completionNotifications", { completionNotifications: false }],
+		["hideWorkingLabel", { hideWorkingLabel: false }],
 		["showSidebarOnStartup", { showSidebarOnStartup: false }],
 		["showSidebarAgent", { sidebarPanelLayout: expect.arrayContaining([{ id: "agent", visible: false }]) }],
 		["showSidebarTodos", { sidebarPanelLayout: expect.arrayContaining([{ id: "todos", visible: false }]) }],
@@ -165,6 +168,20 @@ describe("configuration files", () => {
 			session: { [key]: true },
 		});
 		expect(result.config).toMatchObject(expected);
+	});
+
+	it("migrates the pre-release showWorkingLabel spelling by inversion", () => {
+		expect(validateConfig({ showWorkingLabel: false }).config.hideWorkingLabel).toBe(true);
+		expect(validateConfig({ showWorkingLabel: true }).config.hideWorkingLabel).toBe(false);
+	});
+
+	it("gives an explicit hideWorkingLabel value precedence over the legacy spelling", () => {
+		expect(validateConfig({ hideWorkingLabel: false, showWorkingLabel: false }).config.hideWorkingLabel).toBe(
+			false,
+		);
+		expect(validateConfig({ hideWorkingLabel: true, showWorkingLabel: true }).config.hideWorkingLabel).toBe(
+			true,
+		);
 	});
 
 	it("loads an ordered global Sidebar layout with deterministic compatibility precedence", async () => {
@@ -250,5 +267,33 @@ describe("configuration files", () => {
 			futureSetting: "keep",
 			completionNotifications: false,
 		});
+	});
+
+	it("preserves a legacy working-label preference when saving an unrelated preference", async () => {
+		await writeJson(userPath, { showWorkingLabel: false });
+		await saveUserConfigPatch(userPath, { completionNotifications: false });
+
+		expect(JSON.parse(await readFile(userPath, "utf8"))).toEqual({
+			showWorkingLabel: false,
+			completionNotifications: false,
+		});
+		const reloaded = await loadConfig({ userPath, projectPath, projectTrusted: false });
+		expect(reloaded.config.hideWorkingLabel).toBe(true);
+	});
+
+	it("replaces a colliding legacy working-label key so a saved preference survives reload", async () => {
+		await writeJson(userPath, {
+			showWorkingLabel: true,
+			hideWorkingLabel: false,
+			futureSetting: "keep",
+		});
+		await saveUserConfigPatch(userPath, { hideWorkingLabel: true });
+
+		expect(JSON.parse(await readFile(userPath, "utf8"))).toEqual({
+			futureSetting: "keep",
+			hideWorkingLabel: true,
+		});
+		const reloaded = await loadConfig({ userPath, projectPath, projectTrusted: false });
+		expect(reloaded.config.hideWorkingLabel).toBe(true);
 	});
 });

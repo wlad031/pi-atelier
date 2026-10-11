@@ -341,6 +341,13 @@ describe("sidebar snapshot and layout", () => {
 		expect(regular).toContainEqual(expect.stringMatching(/^Enabled\s+8 \/ 12$/));
 	});
 
+	it("hides randomized working text while retaining the activity state", () => {
+		const config = { ...DEFAULT_CONFIG, hideWorkingLabel: true };
+		const rows = renderRows(snapshot(), { config, width: 40, color: false });
+		expect(rows).toContain("◆ Working");
+		expect(rows.join("\n")).not.toContain("GITIFYING");
+	});
+
 	it("preserves the labeled hierarchy across the compact threshold", () => {
 		const expandedConfig = { ...DEFAULT_CONFIG, showSidebarToolNames: true };
 		const compact = renderRows(snapshot(), { config: expandedConfig, width: 39, color: false });

@@ -479,6 +479,24 @@ describe("footer", () => {
 		expect(working).toContain(`${darkRgb.amber}● PONDERING...\u001b[39m`);
 	});
 
+	it("hides randomized working text while retaining the static activity label and dots", () => {
+		const line = renderFooterLine(
+			{ ...state, activity: "working", workingLabel: "GERMINATING" },
+			{ ...DEFAULT_CONFIG, hideWorkingLabel: true },
+			plainTheme,
+			180,
+		);
+		expect(stripAnsi(line)).not.toContain("GERMINATING");
+		expect(stripAnsi(line)).toContain("● WORKING...");
+		const plainTextLine = renderFooterLine(
+			{ ...state, activity: "working", workingLabel: "GERMINATING" },
+			{ ...DEFAULT_CONFIG, nerdFont: false, hideWorkingLabel: true },
+			plainTheme,
+			180,
+		);
+		expect(stripAnsi(plainTextLine)).toContain("WORKING...");
+	});
+
 	it("overrides context blue at warning and danger thresholds", () => {
 		const warning = renderFooterLine(
 			{ ...state, metrics: { ...state.metrics, contextPercent: 70 } },

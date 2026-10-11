@@ -99,7 +99,12 @@ export function createMenuActions(
 	 * the session value when saving fails, for preferences with no in-session effect.
 	 */
 	const persistPreference = async (
-		patch: Partial<Pick<AtelierConfig, "showSidebarOnStartup" | "completionNotifications" | "nerdFont">>,
+		patch: Partial<
+			Pick<
+				AtelierConfig,
+				"showSidebarOnStartup" | "completionNotifications" | "nerdFont" | "hideWorkingLabel"
+			>
+		>,
 		messages: { saved: string; failed: string },
 		rollback: boolean,
 	): Promise<void> => {
@@ -192,6 +197,15 @@ export function createMenuActions(
 				{
 					saved: `Font mode: ${enabled ? "Nerd Font" : "Plain text"}`,
 					failed: "Font mode changed for this session but could not be saved",
+				},
+				false,
+			),
+		setHideWorkingLabel: (enabled: boolean): Promise<void> =>
+			persistPreference(
+				{ hideWorkingLabel: enabled },
+				{
+					saved: `Randomized working text ${enabled ? "hidden" : "shown"}`,
+					failed: "Randomized working text changed for this session but could not be saved",
 				},
 				false,
 			),
@@ -407,6 +421,11 @@ export async function openAtelierControlCenter(
 					description: "User preference",
 				},
 				{
+					value: "working-label",
+					label: `Hide randomized working text: ${onOff(config.hideWorkingLabel)}`,
+					description: "User preference; shows a static WORKING label with activity indicators",
+				},
+				{
 					value: "sidebar-tools",
 					label: `Sidebar tool list: ${sidebar.isToolListExpanded() ? "Expanded" : "Collapsed"}`,
 					description: "User preference",
@@ -433,6 +452,9 @@ export async function openAtelierControlCenter(
 					break;
 				case "notifications":
 					await actions.setCompletionNotifications(!runtime.getConfig().completionNotifications);
+					break;
+				case "working-label":
+					await actions.setHideWorkingLabel(!runtime.getConfig().hideWorkingLabel);
 					break;
 				case "sidebar-tools":
 					await sidebar.toggleToolList();

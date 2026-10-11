@@ -38,6 +38,7 @@ export const DEFAULT_CONFIG: AtelierConfig = {
 	showSidebarOnStartup: true,
 	sidebarPanelLayout: cloneLayout(DEFAULT_SIDEBAR_PANEL_LAYOUT),
 	completionNotifications: true,
+	hideWorkingLabel: false,
 };
 
 export interface ConfigLoadResult {
@@ -63,6 +64,7 @@ const USER_ONLY_KEYS: ReadonlySet<string> = new Set([
 	"showSidebarOnStartup",
 	"completionNotifications",
 	"nerdFont",
+	"hideWorkingLabel",
 ]);
 
 const isEnoent = (error: unknown): boolean => (error as NodeJS.ErrnoException | undefined)?.code === "ENOENT";
@@ -327,11 +329,17 @@ function applyNonDisplay(
 		"showSidebarOnStartup",
 		"completionNotifications",
 		"nerdFont",
+		"hideWorkingLabel",
 	] as const) {
 		const value = input[key];
 		if (typeof value === "boolean") {
 			if (userLayer || !USER_ONLY_KEYS.has(key)) config[key] = value;
 		} else if (key in input) warnings.push(`${key} must be boolean`);
+	}
+	if ("showWorkingLabel" in input && !("hideWorkingLabel" in input)) {
+		if (typeof input.showWorkingLabel === "boolean") {
+			if (userLayer) config.hideWorkingLabel = !input.showWorkingLabel;
+		} else warnings.push("showWorkingLabel must be boolean");
 	}
 	for (const key of ["showSidebarAgent", "showSidebarTodos"] as const) {
 		if (key in input && typeof input[key] !== "boolean") warnings.push(`${key} must be boolean`);
@@ -415,6 +423,11 @@ export async function saveUserConfigPatch(path: string, patch: Partial<AtelierCo
 		current = parsed;
 	} catch (error) {
 		if (!isEnoent(error)) throw error;
+	}
+	if ("hideWorkingLabel" in patch) {
+		const { showWorkingLabel: _legacyWorkingLabel, ...currentWithoutLegacyWorkingLabel } = current;
+		await writeJsonAtomic(path, { ...currentWithoutLegacyWorkingLabel, ...patch });
+		return;
 	}
 	await writeJsonAtomic(path, { ...current, ...patch });
 }

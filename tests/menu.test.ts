@@ -148,6 +148,7 @@ describe("Control Center presentation", () => {
 				"Font mode: Nerd Font",
 				"Sidebar on startup: On",
 				"Completion notifications: On",
+				"Hide randomized working text: Off",
 				"Sidebar tool list: Collapsed",
 				"Back",
 			],
@@ -416,6 +417,14 @@ describe("menu actions", () => {
 		expect(h.runtime.getConfig().completionNotifications).toBe(false);
 		expect(h.savePatch).toHaveBeenCalledWith("/tmp/user.json", { completionNotifications: false });
 		expect(h.ctx.ui.notify).toHaveBeenCalledWith("Completion notifications disabled", "info");
+	});
+
+	it("persists the working-status label suppression preference", async () => {
+		const h = harness();
+		await h.actions.setHideWorkingLabel(true);
+		expect(h.runtime.getConfig().hideWorkingLabel).toBe(true);
+		expect(h.savePatch).toHaveBeenCalledWith("/tmp/user.json", { hideWorkingLabel: true });
+		expect(h.ctx.ui.notify).toHaveBeenCalledWith("Randomized working text hidden", "info");
 	});
 
 	it("rolls back tools and reports synchronous action failures", () => {

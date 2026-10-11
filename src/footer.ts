@@ -145,12 +145,23 @@ function activityText(
 	workingDots: string,
 	compact: boolean,
 	nerdFont: boolean,
+	hideWorkingLabel: boolean,
 ): string {
 	const fallback = state.activity.toUpperCase();
-	const label = state.activity === "working" && !compact ? (state.workingLabel ?? fallback) : fallback;
+	const showLabel = true;
+	const label =
+		state.activity === "working" && !compact
+			? hideWorkingLabel
+				? fallback
+				: (state.workingLabel ?? fallback)
+			: fallback;
 	const dots =
 		state.activity === "working" && !compact ? workingDots.padEnd(WORKING_DOT_FRAMES[0].length, " ") : "";
-	return palette.paint(state.activity, theme.bold(`${nerdFont ? "● " : ""}${sanitizeInline(label)}${dots}`));
+	const glyph = nerdFont || !showLabel ? "● " : "";
+	return palette.paint(
+		state.activity,
+		theme.bold(`${glyph}${showLabel ? sanitizeInline(label) : ""}${dots}`),
+	);
 }
 
 interface ItemContext {
@@ -176,8 +187,8 @@ const SEGMENT_ITEMS: Record<SegmentId, (context: ItemContext) => FooterItem[]> =
 	activity: ({ state, palette, theme, workingDots, config }) => [
 		item(
 			"activity",
-			activityText(state, palette, theme, workingDots, false, config.nerdFont),
-			activityText(state, palette, theme, workingDots, true, config.nerdFont),
+			activityText(state, palette, theme, workingDots, false, config.nerdFont, config.hideWorkingLabel),
+			activityText(state, palette, theme, workingDots, true, config.nerdFont, config.hideWorkingLabel),
 		),
 	],
 	model: ({ state, palette, theme, symbols }) => {
